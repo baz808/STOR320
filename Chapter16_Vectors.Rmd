@@ -1,0 +1,75 @@
+---
+title: "Chapter16_Vectors"
+author: "Sarah"
+date: "2025-07-16"
+output: html_document
+---
+
+```{r}
+library(tidyverse)
+# purr package
+```
+
+*** Vector Basics
+
+- Atomic vectors, of which there are six types: logical, integer, double, character, complex, and raw. Integer and double vectors are numeric vectors; homogeneous.
+- Lists, which are sometimes called recursive vectors because lists contain other lists; heterogeneous.
+
+****** Two Key Properties
+
+- type --> 'typeof()'
+- length --> 'length()'
+
+****** Arbitrary Attributes
+
+- attributes used to create augmented vectors, which build on additional behavior:
+  - factors are built on top of integer vectors
+  - dates and date-times are built on top of numeric vectors
+  - data frames and tibbles are built on top of lists
+  
+  
+*** Atomic Vector Types
+
+- Logical --> take F, T, and NA, usually constructed with comparison operators
+- Numeric --> integer and double vectors, numbers are doubles by default, to make an integer place a L after the number 
+
+- Doubles are approximations, floating numbers, do not use '==' but instead, 'dplyr::near()', have special values NA, NaN, Inf, -Inf
+- Integers have special value NA
+- Instead of using '==' instead use --> 'is.finite()', 'is.infinite()', 'is.nan()'
+
+
+*** Character Vectors
+
+- 'pryr::object_size()'
+
+
+*** Missing Values 
+
+- NA --> logical
+- NA_integer_ --> integer
+- NA_real_ --> double
+- NA_character_ --> character
+
+
+*** Coercion 
+
+* Two ways to convert, or coerce, one type of vector to another:
+
+- Explicit Coercion: happens when you call a function like --> 'as.logical()', 'as.integer()', 'as.double()', or 'as.character()'
+- Implicit Coercion: happens when a vector is used in a specific context that expects a certain type of vector
+
+
+*** Naming Vectors
+
+- 'c()'
+- 'purr::set_names()'
+
+
+*** Subsetting
+
+- '[.[' --> 'x[a]'
+
+* subset a vector with: a numeric vector containing only integers that are all positive, negative, or zero 
+* Subsetting with positive integers keeps the elements at those positions
+* Negative values drop the elements at the specified positions
+* Error when mixing positive and negative values 

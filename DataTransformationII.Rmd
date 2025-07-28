@@ -1,0 +1,58 @@
+---
+title: "DataTransformationII Lecture"
+author: "Sarah"
+date: "2025-06-25"
+output: html_document
+---
+
+*mutate()* 
+
+- Used to create new variables
+  - creative new metrics
+  - modify units
+  - transform variables
+  - unique identifiers
+  - numeric to categorical
+  - categorical to numeric
+
+```{r create new variables}
+flights_sml <- select(flights, year:day, 
+                      starts_with("dep"),
+                      starts_with("arr"),
+                      distance, air_time)
+head(flights_sml) # Results in reduced data set
+```
+```{r}
+# Example of mutate()
+mutate_flights_sml <- mutate(flights_sml,
+                             gain=arr_delay-dep_delay, # making new columns/variables 
+                             speed=distance/air_time*60) 
+head(select(mutate_flights_sml, gain, speed, everything()))
+```
+```{r}
+flights1 = transmute(flights, # transmute creates a new data frame containing only the specified computations
+                     dep_time, # and selects variables 
+                     hour=dep_time%/%100,
+                     minute=dep_time%%100)
+flights1
+```
+```{r nonlinear transformation}
+flights2 = select(flights, distance)
+ggplot(flights2) + 
+  geom_density(aes(x=distance))
+# multimodal due to distinct differences in distances resulting in peaks
+```
+```{r}
+flights3 = transmute(flights3,
+                     logdist=log(distance))
+```
+```{r offsets}
+flights5 = transmute(flights,
+                     dep_delay,
+                     lag1_dep_delay=lag(dep_delay))
+flights5
+
+ggplot(flights5) +
+       geom_point((aes(x=lag1_dep_delay, y=dep_delay)))
+```
+

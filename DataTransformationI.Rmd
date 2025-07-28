@@ -1,0 +1,90 @@
+---
+title: "DataTransformationI Lecture"
+author: "Sarah"
+date: "2025-06-24"
+output: html_document
+---
+
+```{r}
+install.packages("nycflights13")
+library("nycflights13")
+library(tidyverse)
+```
+
+```{r}
+view(flights)
+
+# Some Variables ->
+                        # int = interger
+                        # dbl = double
+                        # chr = character
+                        # dttm = date and times
+                        # lgl = logical (TRUE or FALSE)
+                        # fctr = factor
+                        # date = dates
+```
+
+```{r filter()}
+# dont want flights with unusual delays (> 120 min)
+filter(flights, !(arr_delay>20 | dep_delay>120))
+```
+```{r}
+# Want flights missing air time
+filter(flights, is.na(air_time))
+```
+```{r arrange()}
+# used to sort observations
+head(flights) # head() used to display first nrows of data frame, by default the first 6 rows
+head(arrange(flights, day, dep_time)) # by default in ascending order
+head(arrange(flights, desc(day), dep_time)) # in descending order by day 
+
+# by default, missing values at the bottom of table when using arrange()
+# order function rearranges data/rows based on tabl example: arrange() uses order() function
+missing_data <- tibble(x=c(1,1,NA,3,3,NA),
+                       y=c(NA,)
+                       )
+```
+```{r select()}
+# used to get specific columns columns, rearrange columns
+names(flights) # names() retrieves column names and num of variables
+
+# select only year, month, day from flights data
+data1=select(flights, year, month, day)
+names(data1)
+
+# select all variables between dep_time to arr_time
+data2=select(flights, dep_time:arr_time) # including dep_time and arr_time
+names(data2)
+
+# deselect all previous variables
+data3=select(flights, -(dep_time:arr_delay))
+names(data3)
+```
+```{r}
+# select based on index
+length(names(flights))
+
+# select based on text
+# starts_with("TEXT")
+select(flights, starts_with("dep"))
+# ends_with("TEXT")
+select(flights, ends_with("delay"))
+# contains("TEXT")
+select(flights, contains("ar"))
+```
+```{r renaming variables}
+# used to rename column names
+data9=select(flights, yr=year)
+names(data9)
+
+# rename()
+data10=rename(flights, yr=year) # where any column name is 'year' renamed to 'yr'
+names(data10)
+```
+```{r reordering variables}
+head(flights)
+data11=select(flights, dep_time, arr_time,
+              air_time, everything()) # everything() selects all variables
+head(data11)
+```
+

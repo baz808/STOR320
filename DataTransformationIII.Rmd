@@ -1,0 +1,192 @@
+---
+title: "DataTransformationIII"
+author: "Sarah"
+date: "2025-06-25"
+output: html_document
+---
+
+```{r}
+library(ggplot2)
+library(dplyr)
+library(nycflights13)
+```
+
+
+*summarize()*
+
+  - *The Pipe*
+  - Statistical Summaries
+  - Grouped Summaries
+  - Helpful functions
+  
+# Useful for combining multiple steps of operations
+# Represented by '%>%'
+# Reads as "then"
+# Works like composite function from algebra
+  
+```{r Chaining w/ The Pipe}
+f_pipedream <- flights %>%
+  
+  # Create new time variables in hours:
+  # dep_time is in HHMM format, so dep_time %/% 100 gives hours,
+  # and dep_time %% 100 gives minutes. Combine them into decimal hours.
+  mutate(
+    dep_hr = dep_time %/% 100 + (dep_time %% 100) / 60,
+    sched_dep_hr = sched_dep_time %/% 100 + (sched_dep_time %% 100) / 60,
+    arr_hr = arr_time %/% 100 + (arr_time %% 100) / 60,
+    
+    # Calculate departure delay in hours
+    dep_delay_hr = dep_hr - sched_dep_hr,
+    
+    # arr_delay is already in minutes; convert to hours
+    arr_delay_hr = arr_delay / 60,
+    
+    # Calculate "gain" in hours — did the flight make up time in the air?
+    gain_hr = arr_delay_hr - dep_delay_hr,
+    
+    # Rank the gain values to see relative time recovery
+    percent_gain_hr = percent_rank(gain_hr)
+  ) %>%
+  
+  # Select only the relevant columns
+  select(carrier, origin:distance, dep_delay_hr:percent_gain_hr) %>%
+  
+  # Sort by highest time "gain"
+  arrange(desc(percent_gain_hr))
+
+f_pipedream
+```
+
+* Using the flights dataset to explore how much time flights "make up" (gain) in the air, that is,
+even if a flight leaves late, does it arrive closer to on time?
+
+*Key Concepts*
+
+  *%>%* --> passes the result from the left into the next function
+  *mutate()* --> adds or modifies columns
+  *%/%* and *%%* --> integer division and remainder (used to split hours and minutes)
+  *select()* --> picks specific columns
+  *arrange(desc(...))* --> sorts in descending order
+  *percent_rank()* --> converts values to percentile ranks (0-1)
+
+*Steps*
+
+  *dep_hr, sched_dep_hr, arr_hr* --> converts raw times into decimal hours to compute       time-based differences accurately
+  *dep_delay_hr* --> actual delay at departure (in hours), measures how late the flight was leaving
+  *arr_delay_hr* --> arrival delay (in hours), measures how late the flight ended up
+  *gain_hr = arr_delay_hr - dep_delay_hr* --> time gained or lost in air, key metric, positive values = lost more time, negative = made up time
+  *percent_gain_hr* --> percentile rank of time gained/lost, to sort and compare across flights
+  *arrange(desc(...)* --> sorts by biggest gain, to identify extreme cases of recovery or delay
+
+*Questions*
+
+  - Which airlines/routes tend to recover from delays in the air?
+  - Are some flights consistently able to catch up despite leaving late?
+  - Can departure delays be misleading if a flight still arrives close to on time?
+  
+*Visualization*
+```{r Computes Mean Gain by Carrier}
+# Use transformed table to compute mean gain by carrier
+# STEP 1: summarize average gain/loss in air by carrier
+gain_by_carrier <- f_pipedream %>%
+  group_by(carrier) %>% # Group data by airline carrier
+  summarize(mean_gain_hr = mean(gain_hr, na.rm = TRUE)) %>% # Calculate the average time gained/lost in hours 
+  arrange(mean_gain_hr) # Sort the carriers from lowest to highest average gain 
+
+# Gives quick view of which airlines tend to make up time (negative gain)
+# or lose time (positive gain) in the air, on average.
+gain_by_carrier 
+```
+
+```{r Plot}
+# STEP 2: Create a bar chart to visualize average gain/loss by airline
+                                # reorder() ensures the bars are ordered from lowest to                                       highest
+ggplot(gain_by_carrier, aes(x = reorder(carrier, mean_gain_hr), y = mean_gain_hr)) +
+  geom_col(fill = "steelblue") + # Create vertical bars with consistent color
+  coord_flip() +                 # Flip coordinates to make bars horizontal (easier to read)
+  labs(
+    title = "Average In-Air Time Gained or Lost by Airline", # Add title to plot
+    x = "Airline Carrier",                                   # Add x-label
+    y = "Average Gain (hours"                                # Add y-label
+  ) +
+  theme_minimal()             # Use clean minimal theme for aesthetics
+```
+
+*What This Shows*
+
+  - Bars to the left of 0 --> airlines that often make up time in the air
+  - Bars to the right --> airlines that tend to lose more time or do not recover much delay
+
+
+```{r Chaining w/ The Pipe2}
+f_pipedream2 <- flights %>%
+  
+  # Create new time variables in hours:
+  # dep_time is in HHMM format, so dep_time %/% 100 gives hours,
+  # and dep_time %% 100 gives minutes. Combine them into decimal hours.
+  mutate(
+    dep_hr = dep_time %/% 100 + (dep_time %% 100) / 60,
+    sched_dep_hr = sched_dep_time %/% 100 + (sched_dep_time %% 100) / 60,
+    arr_hr = arr_time %/% 100 + (arr_time %% 100) / 60,
+    
+    # Calculate departure delay in hours
+    dep_delay_hr = dep_hr - sched_dep_hr,
+    
+    # arr_delay is already in minutes; convert to hours
+    arr_delay_hr = arr_delay / 60,
+    
+    # Calculate "gain" in hours — did the flight make up time in the air?
+    gain_hr = arr_delay_hr - dep_delay_hr,
+    
+    # Rank the gain values to see relative time recovery
+    percent_gain_hr = percent_rank(gain_hr)
+  ) %>%
+  
+  # Select only the relevant columns
+  select(carrier, origin:distance, dep_delay_hr:percent_gain_hr) %>%
+  
+  # Sort by highest time "gain"
+  arrange(desc(percent_gain_hr))
+
+  # Input Modified Data and Remove Flights Missing Air Time
+  filter(!is.na(air_time)) # is.na() returns TRUE if value missing
+                           # ! negates it, so keeping only non-missing values
+f_pipedream2
+```
+
+
+```{r Useful Summary Functions}
+# Measures of Center -->
+  # mean()
+  # median()
+  # mode()
+
+# Measures of Spread -->
+  # var()
+  # sd()
+  # IQR()
+  # mad()
+
+# Measures of Rank -->
+  # min()
+  # max()
+  # quantile()
+
+# Measures of Position -->
+  # order matters
+  # first() = x[1]
+  # last() = x[length(x)]
+  # nth(,k) = x[k]
+
+# Counts
+  # n()
+  # n_distinct()
+
+# ...
+```
+
+
+```{r summarize() with group_by()}
+
+```
+

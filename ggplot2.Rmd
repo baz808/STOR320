@@ -1,0 +1,73 @@
+---
+title: "ggplot2 practice"
+author: "Sarah"
+date: "2025-06-23"
+output: html_document
+---
+
+```{r package, include=FALSE}
+#Set working directory
+setwd("~/STOR320")
+#Import packages
+library(tidyverse)
+#Import function or dataset using package::function()
+ggplot2::mpg
+```
+
+*** Some variables in mpg: 
+  - displ, engine size of car in liters
+  - hwy, fuel efficiency on highway in miles per gallon
+  
+```{r Creating a ggplot}
+# To plot mpg, run this code to put displ on x-axis and hwy on y-axis:
+
+ggplot(data=mpg) +
+  geom_point(mapping = aes(x = displ, y = hwy))
+```
+******* Plot showing a negative relationship among engine size and fuel efficiency, showing that cars with larger engines have worse fuel efficiency than cars with smaller engines. 
+
+
+
+```{r messing w mpg data}
+# view data frame, opens up in another tab
+View(mpg)
+# getting help w data frame
+?mpg
+
+# Plotting hwy vs cyl
+ggplot(data = mpg) +
+  geom_point(mapping = aes(x = hwy, y = cyl))
+```
+
+```{r mapping aesthetics}
+# mapping aesthetic to variable: color, size, shape, alpha
+ggplot(data = mpg) +
+  geom_point(mapping = aes(x = displ, y = hwy, color = class))
+
+ggplot(data = mpg) +
+  geom_point(mapping = aes(x = displ, y = hwy, size = class))
+
+ggplot(data = mpg) +
+  geom_point(mapping = aes(x = displ, y = hwy, shape = class))
+
+ggplot(data = mpg) +
+  geom_point(mapping = aes(x = displ, y = hwy, alpha = class))
+```
+
+```{r messing w facets}
+# facet by one variable
+ggplot(data = mpg) +
+  geom_point(mapping = aes(x = displ, y = hwy)) +
+  facet_wrap(~ class, nrow = 2)
+
+# facet by two variables
+ggplot(data = mpg) +
+  geom_point(mapping = aes(x = displ, y = hwy)) +
+  facet_grid(drv ~ cyl)
+
+#facet without rows or columns dimension
+ggplot(data = mpg) +
+  geom_point(mapping = aes(x = displ, y = hwy)) +
+  facet_grid(. ~ cyl)
+```
+

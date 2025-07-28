@@ -1,0 +1,43 @@
+---
+title: "Chapter17_Iteration"
+author: "Sarah"
+date: "2025-07-16"
+output: html_document
+---
+
+```{r}
+library(tidyverse)
+```
+
+*** For Loops
+
+```{r}
+df = tibble(
+  a = rnorm(10),
+  b = rnorm(10),
+  c = rnorm(10),
+  d = rnorm(10)
+)
+df
+```
+
+```{r}
+output = vector("double", ncol(df)) # output
+
+for (i in seq_along(df)) {          # sequence
+  output[[i]] = median(df[[i]])     # body
+}
+
+output
+```
+
+* Output --> 'output = vector("double", length(x))'
+- allocating space for the output
+- 'vector(arg1 = type of vector, arg2 = length of vector)' 
+
+* Sequence --> 'i in seq_along(df)' 
+- determines what to loop over, assigns i to different value from 'seq_along(df)' 
+- 'seq_along(arg1 = df)'
+
+* Body --> 'output[[i]] = median(df[[i]])'
+- loops over values in the vector 

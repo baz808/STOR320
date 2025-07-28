@@ -1,0 +1,50 @@
+---
+title: "DataTransformationIV"
+author: "Sarah"
+date: "2025-06-26"
+output: html_document
+---
+* *Case Study*
+
+*** Flight Accuracy
+
+*** Accuracy Flight Means
+  ******* Departure Delay = 0
+  ****** Arrival Delay = 0
+  
+*** Bad Metric
+  ****** Accuracy = delay_dep + delay_arr
+  ****** Accuracy = (delay_dep + delay_arr)/2
+  
+*** Good Metric
+  ****** Accuracy = |delay_dep| + |delay_arr|
+  ****** Accuracy = sqrt(delay_dep^2 + delay_arr^2)
+  
+*** Table First, Graphics Second
+
+
+* Summary Table
+
+```{r}
+accuracy <-
+  f.pipedream3 %>%
+  transmute(carrier, origin,
+            accuracy=abs(dep_delay_hr) + abs(arr_delay_hr)) %>%
+  group_by(carrier, origin) %>%
+```
+
+```{r}
+# Sorted by Average Accuracy
+  # Best Carriers/Origin
+head(arrange(accuracy,avg), 5)
+```
+
+```{r}
+# Worst Carriers/Origin
+head(arrange(accuracy, desc(avg)), 5)
+```
+
+```{r}
+
+```
+
