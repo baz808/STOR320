@@ -1,0 +1,319 @@
+---
+title: "Analysis 2: Connecting Country Level Data"
+author: "Sarah Bazari"
+date:  "`r format(Sys.time(), '%B %d, %Y')`"
+output: html_document
+---
+
+# Instructions
+
+**Overview:** For each question, show your R code that you used to answer each question in the provided chunks. When a written response is required, be sure to answer the entire question in complete sentences outside the code chunks. When figures are required, be sure to follow all requirements to receive full credit. Point values are assigned for every part of this analysis. **Do not work with other students on this assignment. You are to complete this assignment by yourself.**
+
+**Helpful:** Make sure you knit the document as you go through the assignment. Check all your results in the created HTML file. Change `eval=FALSE` to `eval=TRUE` as you answer the questions. 
+
+**Submission:** Submit via an electronic document on Canvas. Must be submitted as an HTML file generated in RStudio. 
+
+```{r setup, include=F}
+knitr::opts_chunk$set(echo = TRUE)
+options(scipen=999)
+library(tidyverse) 
+library(rvest)
+library(curl) #Make sure you install this package if you don't have it.
+```
+
+# Introduction
+
+Many times in data science, your data will be split between many different sources, some of which may be online. In this analysis assignment, we will webscrape country level data from multiple websites, clean the data individually, and merge the data. The website [Worldometers](https://www.worldometers.info/) contains very interesting country level data that when connected may allow us to learn interesting things about the wonderful world in which we exist:
+
+Follow the steps to accomplish specific tasks, and do not modify code on lines with the comment **#DO NOT CHANGE**. Add code in R code chunks wherever you see COMPLETE. After completing each code chunk, change `eval=FALSE` to `eval=TRUE` and **knit** the document. If you don't change, `eval=FALSE` to `eval=TRUE`, there will be a large penalty since none of your output will show in the HTML.
+
+# Assignment
+
+## Part 1: GDP by Country
+
+Information at [Worldometer GDP](https://www.worldometers.info/gdp/gdp-by-country/) contains GDP data from 2023 published by the world bank. GDP is the monetary value of goods and services produced within a country over a period of time. On this website, GDP is presented in dollars.
+ 
+### Q1 *(2 Points)*
+
+Webscrape the data from https://www.worldometers.info/gdp/gdp-by-country/ into a data frame in R called `GDP`. If done correctly, you should have a new object in R called `GDP` containing all the data in the table on the website.
+
+Each time you run this code chunk, you may have to run the first line of this code every time to get it to work. You may get some error related to "invalid connection" or "open connection".  You can also try knitting the document every time you make any change to this code chunk to see the output in the HTML file.
+
+```{r,eval=T}
+URL.GDP="https://www.worldometers.info/gdp/gdp-by-country/" #DO NOT CHANGE
+
+# read html content of the webpage
+webpage = read_html(URL.GDP)
+
+# extracting the first table on the page
+GDP = webpage %>%
+  html_element("table") %>%
+  html_table()
+
+head(GDP) #DO NOT CHANGE
+```
+
+### Q2 *(2 Points)*
+
+Remove the first and fourth variables from `GDP` and create a new data frame named `GDP2` based on this change.
+
+```{r,eval=T}
+GDP2 = GDP %>%
+  select(-c(1,4)) # syntax to remove cols with select()
+# and negative indexing
+
+
+head(GDP2) #DO NOT CHANGE
+```
+
+### Q3 *(3 Points)*
+
+Create a new data frame named `GDP3` based off `GDP2` where the variables `GDP (nominal, 2023)`,`GDP  growth`, `Population (2023)`, `GDP  per capita`, and `Share of World GDP` become `GDP`, `Growth`, `Population`, `PerCapita`, and `Share`, respectively. Be careful!! In the original variable names, there are multiple spaces between "GDP" and "growth" in `GDP growth` and multiple spaces between "GDP" and "per capita" in `GDP  per capita`.
+
+```{r,eval=T}
+GDP3 = GDP2 %>%
+  rename(
+    "GDP" = "GDP(nominal, 2023)",
+    "Growth" = "GDPGrowth",
+    "Population" = "Population(2023)",
+    "PerCapita" = "GDPpercapita",
+    "Share" = "Share ofWorld GDP"
+  )
+
+names(GDP3) #DO NOT CHANGE
+```
+
+
+### Q4 *(3 Points)*
+
+Next, we must clean the data so there are no dollar signs or percent signs in the data using `str_replace()`. The dollar sign is a special character and must be referenced as `\\$`. Create a new data frame named `GDP4` where the dollar signs and percent signs are removed from all necessary variables.
+
+```{r, eval=T}
+GDP4 = GDP3 %>%
+  mutate(
+    GDP = str_replace_all(GDP, "\\$", ""),
+    PerCapita = str_replace_all(PerCapita, "\\$", ""),
+    Growth = str_replace_all(Growth, "%", ""),
+    Share = str_replace_all(Share, "%", "")
+  )
+
+str(GDP4) #DO NOT CHANGE
+```
+
+### Q5 *(3 Points)*
+
+Next, create a new data frame named `GDP5` where all commas are removed from potentially numeric variables.
+
+```{r, eval=T}
+GDP5 = GDP4 %>%
+  mutate(
+    GDP = str_replace_all(GDP, ",", ""),
+    Population = str_replace_all(Population, ",", ""),
+    PerCapita = str_replace_all(PerCapita, ",", ""),
+    Growth = str_replace_all(Growth, "−", "-")
+  )
+
+str(GDP5) #DO NOT CHANGE
+```
+
+### Q6 *(2 Points)*
+
+Create a new data frame called `GDP6` where all the variables except `Country` are changed to numeric variables.
+
+```{r, eval=T}
+GDP6 = GDP5 %>%
+  mutate(
+    across(2:6, as.numeric)
+)
+    
+
+str(GDP6) #DO NOT CHANGE
+```
+
+
+### Q7 *(2 Points)*
+
+Rewrite over the original `GDP` variable with a new variable called `GDP` that is in **trillions of dollars** rather than in actual dollars. Rewrite over the original `Population` variable with a new variable of the same name that is in **millions of people** rather than in actual people. You are scaling the original variables to change the units without changing the variable names. Save your changes in a new data frame called `GDP7`.
+
+```{r, eval=T}
+GDP7 = GDP6 %>%
+  mutate(
+    GDP = GDP / 1e12,
+    Population = Population / 1e6
+  )
+
+str(GDP7)  #DO NOT CHANGE
+```
+
+## Part 2: Education Index by Country
+
+Check out the Wikipedia page (https://en.wikipedia.org/wiki/Education_Index) which contains the education index for many countries from 1990 to 2019.
+
+### Q1 *(4 Points)*
+
+Webscrape the data from (https://en.wikipedia.org/wiki/Education_Index) into a data frame in R, then clean the data so that you have three variables: `Country`, `Year`, and `Ed.Index`. The `Year` variable should be numeric. Also, sort the data by `Country`. 
+
+The final data frame should be called `EDU`. I want you to use the pipe so all of this is done sequentially starting with the URL. If you don't use the pipe as requested, then you will lose points.
+
+```{r,eval=T}
+URL.EDU="https://en.wikipedia.org/wiki/Education_Index#cite_note-4" #DO NOT CHANGE
+
+EDU <- read_html(URL.EDU) %>%
+  html_elements("table") %>%
+  .[[2]] %>%  # this is the correct table index
+  html_table(fill = TRUE) %>%
+  rename(Country = 1) %>%  # ensure first column is named 'Country'
+  pivot_longer(
+    cols = -Country,
+    names_to = "Year",
+    values_to = "Ed.Index"
+  ) %>%
+  mutate(
+    Year = as.numeric(Year),
+    Ed.Index = as.numeric(Ed.Index)
+  ) %>%
+  arrange(Country)
+
+head(EDU) #DO NOT CHANGE
+```
+
+### Q2 *(4 Points)*
+
+Create a new dataset called `EDU2` that summarizes the data in `EDU` by country. Calculate the average of the education index and the standard deviation of the education index for each country using the yearly education index from 1995 to 2019 only. These statistics should be named `AVG.EDU` and `SD.EDU`, respectively. Also, I only want `EDU2` to contain the average and standard deviation for countries that have no missing values during the years 1995 to 2019. Just like `EDU`, this data frame `EDU2` should be sorted alphabetically from A to Z.
+
+
+```{r,eval=T}
+EDU2 = EDU %>%
+  filter(Year >=1995 & Year <= 2019) %>%
+  group_by(Country) %>%
+  filter(!any(is.na(Ed.Index))) %>%
+  summarise(
+    AVG.EDU = mean(Ed.Index),
+    SD.EDU = sd(Ed.Index),
+    .groups = "drop"
+  ) %>%
+  arrange(Country)
+  
+head(EDU2,20) #DO NOT CHANGE
+```
+
+
+### Q3 *(2 Points)*
+
+The `nrow()` function in R counts the number of rows in a tibble or data frame. I want you to write code that uses the `nrow()` function to count the number of countries from `EDU` that have at least 1 missing value over the years 1995 to 2019. Your output should just be 1 number.
+
+```{r,eval=T}
+nrow(
+  EDU %>%
+    filter(Year >= 1995 & Year <= 2019) %>%
+    group_by(Country) %>%
+    filter(any(is.na(Ed.Index))) %>%
+    distinct(Country)
+)
+```
+
+
+### Q4 *(2 Points)*
+
+I want you to write code that shows all the data in `EDU2` only for countries that are not present in `GDP7`. I want you to use the `anti_join()` function in your code and your output should be a tibble or data frame.
+
+```{r,eval=T}
+anti_join(EDU2, GDP7, by = "Country")
+```
+
+### Q5 *(2 Points)*
+
+Some of the countries in `EDU2` don't have a match in `GDP7` because their names don't match exactly. The list below contains the countries in `EDU2` that I want you to relabel so that they are identical to what they are called in `GDP7`. Create a data frame called `EDU3` that fixes these problems from `EDU2`.
+
+- Bolivia
+- Democratic Republic of Congo
+- Czech Republic
+- Iran
+- South Korea
+- Russia
+- Vietnam
+
+```{r,eval=T}
+EDU3 = EDU2 %>%
+  mutate(Country = case_when(
+    Country == "Bolivia" ~ "Bolivia (Plurinational State of)",
+    Country == "Democratic Republic of Congo" ~ "Democratic Republic of the Congo",
+    Country == "Czech Republic" ~ "Czechia",
+    Country == "Iran" ~ "Iran (Islamic Republic of)",
+    Country == "South Korea" ~ "Republic of Korea",
+    Country == "Russia" ~ "Russian Federation",
+    Country == "Vietnam" ~ "Viet Nam",
+    TRUE ~ Country
+  ))
+
+filter(EDU3, Country %in% c("Bolivia (Plurinational State of)", "Democratic Republic of the Congo", "Czechia", "Iran (Islamic Republic of)", "Republic of Korea", "Russian Federation", "Viet Nam"))
+```
+
+
+## Part 3: World Health Organization Data by Country
+
+Check out the Wikipedia page (https://en.wikipedia.org/wiki/List_of_countries_by_total_health_expenditure_per_capita). On this webpage there is a table that shows the total health spending per capita in PPP international dollars (not inflation-adjusted) according to the **World Health Organization**.
+
+### Q1 *(4 Points)*
+
+Webscrape the appropriate table discussed above from (https://en.wikipedia.org/wiki/List_of_countries_by_total_health_expenditure_per_capita), create a new variable called `Health.Change` that is the 2020 value minus the 2018 value, then remove the variables named `2018`, `2019`, `2020`, and `2021`, then remove countries that having missing values due to the fact that we don't know the health care spending amount for either 2020 or 2018. The final data frame should be called `HEALTH` and should only contain two variables `Location` and `Health.Change`. You will need to do some data cleaning to perform the calculation.
+
+```{r,eval=T}
+URL.HEALTH="https://en.wikipedia.org/wiki/List_of_countries_by_total_health_expenditure_per_capita" #DO NOT CHANGE
+
+HEALTH = read_html(URL.HEALTH) %>%
+  html_element("table") %>%
+  html_table()
+
+str(HEALTH) #DO NOT CHANGE
+```
+
+### Q2 *(2 Points)*
+
+In `HEALTH`, each location has an * symbol that needs to be removed if we are going to merge this dataset with the other datasets. Also, it would be helpful if the location variable was renamed to `Country`. Create a data frame called `HEALTH2` that fixes these 2 problems from `HEALTH`. The asterisk is a special character in regular expressions and cannot easily be removed. Use Google to figure out the appropriate regular expression to identify an asterisk in a string and use the regular expression to remove it.
+
+```{r,eval=T}
+HEALTH2 = HEALTH %>%
+  rename(Country = Location) %>%
+  mutate(Country = str_remove(Country, "\\*"))
+
+str(HEALTH2) #DO NOT CHANGE
+```
+
+## Part 4: Merging the Datasets
+
+### Q1 *(2 Points)*
+
+Create a data frame called `GDP7.EDU3` that performs an inner join of the `GDP7` dataset with `EDU3`.
+
+```{r,eval=T}
+GDP7.EDU3 = inner_join(GDP7, EDU3, by = "Country")
+
+str(GDP7.EDU3) #DO NOT CHANGE
+```
+
+### Q2 *(2 Points)*
+
+If you do an inner join between `GDP7` and `HEALTH2`, there is clearly a problem. The country Ireland is in both datasets. Why are there so many countries, like Ireland, that are clearly represented in both data frames not showing up in the merged data frame? Answer the question in complete sentences in the appropriate space below. I don't want you to fix the problem, I just want you to identify why there is a problem.
+
+```{r}
+# Show countries in GDP7 not matched in HEALTH2
+anti_join(GDP7, HEALTH2, by = "Country") %>%
+  filter(Country %in% HEALTH2$Country)
+```
+
+**Answer** This issue arises, although the country Ireland appears in both GDP7 and HEALTH2, the values in the Country column may not be identical in formatting. Small differences like extra spaces, hidden characters, capitalization, and special symbols, prevent inner_join() from recognizing the matches. Most likely, the Country names in one of the datasets have invisible characters that result in this fail in matching. 
+
+
+
+
+
+
+
+
+
+
+
+
+
+

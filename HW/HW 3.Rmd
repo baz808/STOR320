@@ -1,0 +1,151 @@
+---
+title: "Homework 3"
+author: "Sarah Bazari"
+date: "`r format(Sys.time(), '%B %d, %Y')`"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+# Instructions
+
+**Exercises:**  1,3 (Pgs. 90-91); 1 (Pg. 93); 2,4 (Pg. 99); 1,2 (Pg. 101); 2,3,5 (Pg. 104)
+
+**Submission:** Submit via an electronic document on Sakai. Must be submitted as a HTML file generated in RStudio. All assigned problems are chosen according to the textbook *R for Data Science*. You do not need R code to answer every question. If you answer without using R code, delete the code chunk. If the question requires R code, make sure you display R code. If the question requires a figure, make sure you display a figure. A lot of the questions can be answered in written response, but require R code and/or figures for understanding and explaining.
+
+```{r, include=FALSE}
+library(tidyverse)
+```
+
+# Chapter 5 (Pgs. 90-91)
+
+##  Exercise 1
+```{r hist}
+# Bar plots --> categorical vars
+# Histogram --> continuous vars --> want to use this
+# Histogram for x (length)
+ggplot(diamonds, aes(x = x)) +
+  geom_histogram(binwidth = 0.1, fill = "skyblue", color = "white")
+```
+```{r}
+# Histogram for y (width)
+ggplot(diamonds, aes(x = y)) +
+  geom_histogram(bindwidth = 0.1, fill = "skyblue", color = "white")
+```
+```{r}
+# Histogram for z (depth)
+ggplot(diamonds, aes(x = z)) + 
+  geom_histogram(binwidth = 0.1, fill = "skyblue", color = "white")
+```
+* The goal of this is to explore the distribution of the physical dimensions of the diamonds. All three histograms are right-skewed, as in most diamonds are smaller in size, and only a few are very large. The ranges of x and y lie between 3mm and 10mm, and z lies between 2mm and 6mm. So, we interpret and assign length, width, and depth based on the ranges of sizes.
+
+##  Exercise 3
+```{r}
+diamonds %>%
+  filter(carat >= 0.99, carat <= 1) %>%
+  count(carat)
+
+# Need to look at num diamonds in each carat range 
+```
+23 are 0.99 carat, and 1558 are 1 carat. Maybe due to price on higher carat even by 0.01.
+
+# Chapter 5 (Pg. 93)
+
+##  Exercise 1
+* Missing values are removed when the number of observations are calculated in each bin. In a geom_plot, NA is treated as another category, specifically geom_bar. In a histogram, the x variables needs to be numeric, and the bin function groups observations by ranges into bins. These values will not be in a bin, so the NA values for histograms are dropped.
+
+# Chapter 5 (Pg. 99)
+
+##  Exercise 2
+```{r median }
+ggplot(diamonds, aes(x = cut, y = price)) +
+  geom_boxplot()
+```
+* I evaluated the boxplot for the relationship between cut and price. We see that fair and good cuts might have some expensive diamonds comparable to what we would consider nicer cuts.
+
+```{r barplot}
+ggplot(diamonds, aes(x = cut, y = carat)) +
+  geom_boxplot()
+```
+* We also see that fair cuts tend to have larger carats on average than ideal or premium cuts.
+
+```{r scat}
+ggplot(diamonds, aes(x = carat, y = price, color = cut)) +
+  geom_point(alpha = 0.3)
+```
+* At higher carat values, even lower-cut diamonds reach high prices. 
+* Carat increases with price, cut quality does not always align with price due to size differences. Lower quality cuts can cost more because they are physically bigger. 
+
+##  Exercise 4
+```{r gross }
+# install.packages("lvplot")
+library(lvplot)
+library(ggplot2)
+
+# price v. cut 
+ggplot(diamonds, aes(x = cut, y = price)) +
+  geom_lv()
+```
+* Each layer shows percentile range, the median is in the center, and outer boxes show distribution tails. Ideal and premium cuts are dominant data in the dataset, which tend to have lower median prices. Fair cuts seem to have a wider distribution and higher values in the upper tail (maybe because large carat size). The price spread increases as cut quality decreases, which match what was stated earlier that lower quality cuts are usually larger and more expensive. 
+
+# Chapter 5 (Pg. 101)
+
+##  Exercise 1
+```{r bar}
+ggplot(diamonds, aes(x = color, fill = cut)) +
+  geom_bar()
+```
+* Each color group becomes its own bar. The segments are the proportion of diamonds of each color that fall into each cut. 
+
+##  Exercise 2
+```{r flights again }
+library(nycflights13)
+library(dplyr)
+
+delay = flights %>%
+  group_by(dest, month) %>%
+  summarise(avg_delay = mean(arr_delay, na.rm = TRUE)) %>%
+  ungroup()
+
+ggplot(delay, aes(x = month, y = dest, fill = avg_delay)) + 
+  geom_tile()
+?summarize
+?group_by
+```
+* There are too many destinations (e.g., rows) so its hard to read the axis labels or see any patterns. There is no meaningful ordering since they are in default oder and not by delay or frequency. The color scale is hiding important details such as as making data look uniform and not distinct. Could improve the plot by cleaning the data a bit more, so we might want to filter by destinations, delays, and reorder the data to see clear trends.
+
+# Chapter 5 (Pg. 104)
+
+##  Exercise 2
+```{r makin bins}
+bins = diamonds %>%
+  mutate(price_bin = cut(price,
+                         breaks = c(0, 1000, 3000, 5000, 8000, 20000),
+                         labels = c("<$1k", "$1k–3k", "$3k–5k", "$5k–8k", "$8k+")))
+
+ggplot(bins, aes(x = price_bin, y = carat)) +
+  geom_boxplot()
+```
+* I built bins and then used a boxplot to visualize the distribution of carat by price since we want to see carat sizes across price ranges.
+
+
+##  Exercise 3
+```{r price over}
+ggplot(diamonds, aes(x = carat, y = price)) +
+  geom_point(alpha = 0.2) +
+  geom_smooth(method = "loess", se = FALSE)
+?geom_smooth
+```
+* I think the best approach is using a scatter plot with a smooth line to visualize how price varies across the range of carat values. We see that the relationship is nonlinear, exponential price growth with carat, and large diamonds are more rare.
+
+##  Exercise 5
+```{r scatter better}
+ggplot(data = diamonds) +
+  geom_point(mapping = aes(x = x, y = y)) +
+  coord_cartesian(xlim = c(4, 11), ylim = c(4, 11))
+```
+* This is a better plot over a binned plot because the scatterplot will show us the pairings of outliers. As well, the scatterplot shows each diamond as a point, so outliers show up more clearly. We get to see proportionality of the diamonds better with the scatterplot. See that most points cluster around the diagnonal of the plane. There are some outliers off the diagonal. Some of the diamonds have unrealistic proportions, which may be inconsistent measurements or data entry errors.
+
+

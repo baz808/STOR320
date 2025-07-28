@@ -1,0 +1,93 @@
+---
+title: "Homework 7"
+author: "Sarah Bazari"
+date: "`r format(Sys.time(), '%B %d, %Y')`"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+# Instructions
+
+**Exercises:**  1,4 (Pg. 358); 1,4 (Pgs. 371)
+
+**Submission:** Submit via an electronic document on Sakai. Must be submitted as a HTML file generated in RStudio. All assigned problems are chosen according to the textbook *R for Data Science*. You do not need R code to answer every question. If you answer without using R code, delete the code chunk. If the question requires R code, make sure you display R code. If the question requires a figure, make sure you display a figure. A lot of the questions can be answered in written response, but require R code and/or figures for understanding and explaining.
+
+```{r, include=FALSE}
+library(tidyverse)
+```
+
+
+# Chapter 18 (Pg. 358)
+
+##  Exercise 1
+```{r}
+# lm() fits a linear model 
+# loess() fits a non-linear model
+library(modelr)
+
+# fitting a loess model
+model = loess(y ~ x, data = sim1)
+
+# Grid of x vals for prediction
+grid = sim1 %>%
+  data_grid(x)
+
+# Predict y vals with loess model
+grid = grid %>%
+  add_predictions(model)
+grid
+
+# visualize og data and predicted smooth line
+ggplot(sim1, aes(x, y)) +
+  geom_point() +
+  geom_line(data = grid, aes(y = pred), color = "blue")
+```
+```{r}
+# comparison geom_smooth() vs loess model
+ggplot(sim1, aes(x, y)) +
+  geom_point() +
+  geom_smooth(method = "loess", color = "red")
+```
+* I generated two models, one using loess manually, and another using the loess method argument within the geom_smooth function. These are identical, but in general, using the loess model gives us more control over the process of prediction in finding residuals, comparisons between models, making predictions on new data, and evaluating a model fit.
+
+##  Exercise 4
+
+* We would want to look at a frequency polygon of absolute residuals to better understand the spread of the residuals. This way, we can calibrate the quality of the model in knowing how far away the predictions are from the observed values. Some pros of looking at absolute residuals include avoiding cancellation of positive/negative errors since raw residuals can cancel eachother out, making the distribution look centered even where theres a large error. Another is that it is an accurate measure of determining whether most predictions are close to the true values or far off. Cons absolute residuals include loss of directional info, in that raw residuals show whether the model over/under predicts, and it is harder to interpret model bias.  
+
+# Chapter 18 (Pg. 371)
+
+##  Exercise 1
+```{r}
+# using lm() to fit a model
+model2 = lm(y ~ x, data = sim2)
+model2
+
+# removing the intercept
+w_no_int = lm(y ~ x - 1, data=sim2)
+w_no_int
+```
+* Without the intercept, we are forcing the regression line to go through the origin, which becomes y = b*x. The model may fit worse since it is not finding the best intercept. If the true relationship does not go through the intercept, the predictions will be biased, and especially for small x. 
+
+##  Exercise 4
+```{r}
+mod1 = lm(y ~ x1, data = sim4)
+mod2 = lm(y ~ x1 + x2, data = sim4)
+mod1
+mod2
+
+# check by plotting residuals
+sim4 %>%
+  add_residuals(mod1, var = "res1") %>%
+  add_residuals(mod2, var = "res2") %>%
+  pivot_longer(cols = starts_with("res"), names_to = "model", values_to = "residual") %>%
+  ggplot(aes(x = x2, y = residual)) +
+  geom_point(alpha = 0.5) +
+  facet_wrap(~ model) +
+  geom_hline(yintercept = 0, linetype = "dashed") +
+  labs(title = "Residuals vs x2 for mod1 and mod2")
+
+```
+* Results from the plot show that if mod1's residuals have a pattern with x2, then it is missing something, and if mod2's residuals are randomly scattered, then its capturing more, better. This supports that mod2 is better. 

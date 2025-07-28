@@ -1,0 +1,207 @@
+---
+title: "Homework 4"
+author: "Sarah Bazari"
+date: "`r format(Sys.time(), '%B %d, %Y')`"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+# Instructions
+
+**Exercises:**  2,3 (Pg. 151); 2,4 (Pg. 156); 1,2 (Pgs. 160-161); 2 (Pg. 163); 2,3,4 (Pg. 168)
+
+**Submission:** Submit via an electronic document on Sakai. Must be submitted as a HTML file generated in RStudio. All assigned problems are chosen according to the textbook *R for Data Science*. You do not need R code to answer every question. If you answer without using R code, delete the code chunk. If the question requires R code, make sure you display R code. If the question requires a figure, make sure you display a figure. A lot of the questions can be answered in written response, but require R code and/or figures for understanding and explaining.
+
+```{r, include=FALSE}
+library(tidyverse)
+```
+
+# Chapter 9 (Pg. 151)
+
+*** Rules for Tidy Data:
+
+1. Each variable must have its own column
+2. Each observation must have its own row
+3. Each value must have its own cell
+--> 
+1. Put each dataset in a tibble
+2. Put each variable in a column
+
+##  Exercise 2
+```{r}
+# computing rate for 'table2'
+# first have to reshape tibble using 'pivot_wider()'
+
+table2_tidy = table2 %>%
+  pivot_wider(names_from = type, values_from = count)
+
+# pivot_wider() "widens" data, increasing number of columns
+  # and decreasing numbers of rows, long form --> wide form
+# names_from, values_from: pair of args describing which column
+  # to get the names from, and which column
+  # to get the cell values from
+
+# change observed --> cases and population get own column
+                    # with corresponding counts as values 
+
+table2_tidy %>%
+  mutate(rate = cases / population * 10000)
+# computation for determining rate
+# rate is a new column of the calculation
+```
+* Table 1 is the easiest since it is already tidy. So, we can compute rate immediately with the tibble we have. 'table2' is a bit harder, since we have to tidy it by pivoting it wider, and then we can compute the rate.
+
+```{r}
+# computing rate for table4a and table4b
+# need to tidy by pivot_longer()
+
+table4a_tidy = table4a %>%
+  pivot_longer(cols = c('1999', '2000'), names_to = "year", values_to = "cases")
+
+table4b_tidy = table4b %>%
+  pivot_longer(cols = c('1999', '2000'), names_to = "year", values_to = "population")
+
+# pivot_longer() lengthens data, increases number of rows, decreases number of columns
+  # cols arg are the columns to pivot into longer format
+  # values_to arg specifying name of column to create from the data stored in cell vals
+
+# joining the tables
+# uses left_join()
+
+table4_joined = left_join(table4a_tidy, table4b_tidy, by = c("country", "year")) %>%
+  mutate(year = as.integer(year),
+         rate = cases / population * 10000)
+
+table4_joined
+
+
+# left_join(): mutating joins add columns from y to x
+  # matches observations based on keys
+  # by is join specification, vars to join by 
+```
+* These are the hardest to analyze because we have to first pivot both tables longer, join the tables, and then compute the rate. 
+
+##  Exercise 3
+```{r}
+# need to tidy data again with pivot_wider()
+
+ggplot(table2_tidy, aes(x = year, y = cases)) +
+  geom_line(aes(group = country), color = "gray") +
+  geom_point(aes(color = country)) +
+  labs(title = "Cases Over Time by Country (From Table 2)")
+```
+* We have to tidy 'table2' again to work with the data for the computation we want. 
+
+# Chapter 9 (Pg. 156)
+
+##  Exercise 2
+```{r}
+# table4a %>%
+  #gather(1999, 2000, key = "year", value = "cases")
+```
+* This code fails because gather() needs the argument specifying those columns of interest. 1999 and 2000 are nonsyntactic names so we have to surround them in backticks.
+
+##  Exercise 4
+```{r}
+preg = tribble(
+  ~pregnant, ~male, ~female,
+  "yes", NA, 10,
+  "no", 20, 12
+)
+preg
+
+preg_tidy = preg %>%
+  gather(
+  key = "sex",
+  value = "count",
+  male, female
+)
+preg_tidy
+```
+* I used gather() to make a sex column with the previous column labels, female and male, which are associated with the counts of yes/no of whether they are pregnant or not. 
+# Chapter 9 (Pgs. 160-161)
+
+##  Exercise 1
+```{r}
+tibble(x = c("a,b,c", "d,e,f,g", "h,i,j")) %>%
+separate(x, c("one", "two", "three"), extra = "merge")
+
+```
+* Extra: Merge on this table, merges the extra pieces in the last column.
+```{r}
+tibble(x = c("a,b,c", "d,e", "f,g,i")) %>%
+separate(x, c("one", "two", "three"), fill = "left")
+```
+* Rows where there are fewer pieces after separation can be moved to the left or right. Dealing with missing values in columns.
+
+##  Exercise 2
+* Remove arg will remove input column from the output data frame if set to TRUE, which is default. Want remove = FALSE if we want to retain the original column and the new columns. So useful for when you need new variables but also the original data.
+
+# Chapter 9 (Pg. 163)
+
+##  Exercise 2
+* The direction in argument to fill() specifies the direction in which to fill missing values. The default is down, and the rest are up, downup (first down and then up), or updown (first up and then down).
+
+# Chapter 9 (Pg. 168)
+```{r}
+who %>%
+gather(code, value, new_sp_m014:newrel_f65, na.rm = TRUE) %>%
+mutate(
+code = stringr::str_replace(code, "newrel", "new_rel")
+) %>%
+separate(code, c("new", "var", "sexage")) %>%
+select(-new, -iso2, -iso3) %>%
+separate(sexage, c("sex", "age"), sep = 1)
+```
+
+##  Exercise 2
+```{r error}
+# what happens if we neglect the mutate() piece of the code?
+# who3a <- who1 %>%
+  # separate(key, c("new", "type", "sexage"), sep = "_")
+```
+* It gives a warning about the missing pieces. 
+
+##  Exercise 3
+```{r}
+who1 <- who %>%
+gather(
+new_sp_m014:newrel_f65, key = "key",
+value = "cases",
+na.rm = TRUE)
+
+who2 <- who1 %>%
+mutate(key = stringr::str_replace(key, "newrel", "new_rel"))
+
+who3 <- who2 %>%
+separate(key, c("new", "type", "sexage"), sep = "_")
+who3
+
+who4 <- who3 %>%
+select(-new, -iso2, -iso3)
+
+
+select(who3, country, iso2, iso3) %>%
+  distinct() %>%
+  group_by(country) %>%
+  filter(n() > 1)
+```
+* We expect that if iso2 and iso3 are reduncant to country, we would see that within each country, there would only be one distinct combination of iso2 and iso3 values. We can see that this is the case since the table was returned empty for groupings of country. 
+
+##  Exercise 4
+```{r}
+who5 <- who4 %>%
+separate(sexage, c("sex", "age"), sep = 1)
+
+who5 %>%
+  group_by(country, year, sex) %>%
+  filter(year > 1995) %>%
+  summarise(cases = sum(cases)) %>%
+  unite(country_sex, country, sex, remove = FALSE) %>%
+  ggplot(aes(x = year, y = cases, group = country_sex, colour = sex)) +
+  geom_line()
+```
+* Difficulty to interpret. We could focus on countries with the largest changes and provide additional context. 

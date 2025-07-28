@@ -1,0 +1,111 @@
+---
+title: "Homework 5"
+author: "Sarah Bazari"
+date: "`r format(Sys.time(), '%B %d, %Y')`"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+# Instructions
+
+**Exercises:**  1,3 (Pg. 227); 2 (Pg. 232); 1,2 (Pg. 235); 
+
+**Submission:** Submit via an electronic document on Sakai. Must be submitted as a HTML file generated in RStudio. All assigned problems are chosen according to the textbook *R for Data Science*. You do not need R code to answer every question. If you answer without using R code, delete the code chunk. If the question requires R code, make sure you display R code. If the question requires a figure, make sure you display a figure. A lot of the questions can be answered in written response, but require R code and/or figures for understanding and explaining.
+
+```{r, include=FALSE}
+library(tidyverse)
+```
+
+# Chapter 12 (Pg. 227)
+
+##  Exercise 1
+```{r}
+ggplot(gss_cat, aes(rincome)) +
+  geom_bar()
+```
+* Clearly has too many levels in the variable rincome. These are in alphabetical order, so the interpretation is difficult. Some of the categories are representative of non-responses, and some are mixed with the actual income levels. Want to fix the plot by reordering the levels of the data set, either by frequency or by highest-lowest (dependnig on what we want to look at), flip the coordinates for ease of readability, and perhaps reassess non-responses. 
+
+##  Exercise 3
+```{r}
+# use frequency table of relig and denom
+gss_cat %>%
+  count(relig, denom) %>% # creates n 
+  filter(n > 0) %>% # filter n 
+  arrange(relig)
+
+gss_cat %>%
+  filter(!is.na(denom)) %>%
+  count(relig) %>%
+  ggplot(aes(x = fct_reorder(relig, n), y = n)) +
+  geom_col() +
+  coord_flip() +
+  labs(title = "Religions Associated with Denominations", y = "Count", x = "Religion")
+```
+* For religions, denom is usually NA. Protestant respondants make up a majority of the denom category. Mostly filled when relig is protestant 
+
+
+# Chapter 12 (Pg. 232)
+
+##  Exercise 2
+```{r}
+# look at each factor variable and determine if 
+# ordering is meaningful/logical progression (principled)
+# or levels are without inherent order (arbitrary)
+
+# identify factor variables
+glimpse(gss_cat)
+levels(gss_cat$marital)
+levels(gss_cat$race)
+levels(gss_cat$rincome)
+levels(gss_cat$partyid)
+levels(gss_cat$relig)
+levels(gss_cat$denom)
+```
+* denom: arbitrary
+* relig: arbitrary
+* partyid: principled
+* rincome: principled
+* race: arbitrary
+* marital: arbitrary
+
+# Chapter 12 (Pg. 235)
+
+##  Exercise 1
+```{r}
+# want partyid made into broad groups
+gss_cat %>%
+  mutate(party_simple = fct_collapse(partyid,
+                            "Democrat" = c("Strong Democrat", "Not Str Democrat"),
+                            "Republican" = c("Strong Republican", "Not Str Republican"),
+                            "Independent" = "Ind,neither",
+                            "Other" = c("Other party", "No answer", "Don't know", "Refused"))) %>%
+  count(year, party_simple) %>%
+  group_by(year) %>%
+  mutate(prop = n / sum(n)) %>%
+  ggplot(aes(x = year, y = prop, color = party_simple)) +
+  geom_line(na.rm = TRUE) +
+  labs(title = "Proportion of Party Affiliation Over Time",
+       x = "Year", y = "Proportion") +
+  theme_minimal()
+```
+* Shows how party identification has shifted across years. We see a rise in independents, decline in strong partisanship, and periods of very strong polarization.
+
+##  Exercise 2
+```{r}
+gss_cat %>%
+  mutate(income_collapsed = fct_collapse(rincome,
+    "Low" = c("Lt $1000", "$1000 to 2999", "$3000 to 3999", "$4000 to 4999", "$5000 to 5999",       "$6000 to 6999", "$7000 to 7999", "$8000 to 9999"),
+    "Medium" = c("$10000 - 14999", "$15000 - 19999", "$20000 - 24999"),
+    "High" = c("$25000 or more"),
+    "Unknown" = c("No answer", "Don't know", "Refused", "Not applicable"))) %>%
+  count(income_collapsed) %>%
+  ggplot(aes(x = income_collapsed, y = n, fill = income_collapsed)) +
+  geom_col() +
+  labs(title = "Collapsed Income Brackets", x = "Income Category", y = "Count") +
+  theme_minimal() +
+  theme(legend.position = "none")
+```
+* This kind of plots helps to more easily visualize patterns within the data. It avoids clutter from overly specific levels, and it simplifies the regression model method.

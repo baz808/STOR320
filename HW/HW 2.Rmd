@@ -1,0 +1,202 @@
+---
+title: "Homework 2"
+author: "Sarah Bazari"
+date: "`r format(Sys.time(), '%B %d, %Y')`"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+# Instructions
+
+**Exercises:**  1-3 (Pgs. 49-50); 2-4 (Pg. 51); 2,4 (Pg. 54); 1-4 (Pg. 58)
+
+**Submission:** Submit via an electronic document on Sakai. Must be submitted as a HTML file generated in RStudio. All assigned problems are chosen according to the textbook *R for Data Science*. You do not need R code to answer every question. If you answer without using R code, delete the code chunk. If the question requires R code, make sure you display R code. If the question requires a figure, make sure you display a figure. A lot of the questions can be answered in written response, but require R code and/or figures for understanding and explaining. 
+
+```{r, include=FALSE}
+library(tidyverse)
+library(ggplot2)
+library(nycflights13)
+```
+
+# Chapter 3 (Pgs. 49-50)
+
+##  Exercise 1
+```{r}
+# a. Flights that had an arrival delay of two or more hours
+filter(flights, arr_delay >= 120) # use filter() and logical operator
+```
+```{r}
+# b. Flights that flew to Houston (IAH or HOU)
+
+filter(flights, dest %in% c("IAH", "HOU"))
+```
+
+```{r}
+# c. Flights that were operated by United, American, or Delta
+
+filter(flights, carrier %in% c("AA", "DL", "UN"))
+```
+
+```{r}
+# Flights that departed in summer (July, August, and September)
+
+filter(flights, month %in% c(7, 8, 9))
+```
+
+```{r}
+# e. Flights that arrived more than two hours late, but didn't leave late
+
+filter(flights, arr_delay >= 120 & dep_delay == 0)
+```
+```{r}
+# f. Flights that were delayed by atleast an hour, but made up over 30 minutes in flight
+
+filter(flights, dep_delay >= 60 & (dep_delay - arr_delay) > 30)
+```
+
+```{r}
+# g. Flights that departed between midnight and 6 a.m. (inclusive)
+
+filter(flights, hour >= 0 & hour <= 6)
+```
+
+##  Exercise 2
+```{r}
+filter(flights, between(hour, 0, 6))
+#explanation below
+```
+It gets the rows in between the chosen arguments, which are midnight and 6 am. Usage: between(x, left, and right): x being the variable we want to look in, and the lower and upper bound for x >= left & x <= right, which is what we manually coded in the previous problem.   
+
+##  Exercise 3
+```{r}
+filter(flights, is.na(dep_time)) %>% select(dep_time, dep_delay,arr_time, arr_delay,air_time)
+# using is.na() within filter() to retrieve rows inclusive of NA values
+# using pipe to chain: i only want to see the rows where there are missing # values
+```
+
+* Can see that along with missing values in dep_time, there are also missing values in columns dep_delay, arr_delay, arr_time, and air_time. This makes sense because these rows may represent flights that were cancelled, so these flights would not have those types of data available. 
+
+# Chapter 3 (Pg. 51)
+
+##  Exercise 2
+```{r}
+flights %>% arrange(desc(dep_delay), desc(dep_time)) %>% select(dep_delay, dep_time)
+# chain --> pipe flights to arrange and then select the variables of interest to display
+?arrange
+```
+
+* We want the flights that were most delayed, given by how positive the values are, and the flights that left the earliest, given by military time. We see that 1301 minutes is the most delayed flight, and 6:41 (AM?) is the earliest departure time. 
+
+##  Exercise 3
+```{r}
+flights %>% 
+  arrange(desc(air_time)) %>% 
+  select(air_time)
+# this same chain format--> arranges air_time columns (amount of time spent in air, in minutes)
+# descending because we want the least amount of time spent in air as this acts at the fastest flight
+# selecting the arranged column to view our column of interest
+?sort
+```
+
+* After sorting, we can see that the fastest flight was 695 minutes. 
+
+##  Exercise 4
+```{r longest distance}
+head(flights %>% 
+       arrange(desc(distance), na.rm = TRUE)) %>% 
+select(distance) # longest distance
+
+```
+
+```{r shortest distance}
+head(flights %>% 
+       arrange(distance, na.rm = TRUE)) %>%
+  select(distance) # shortest distance
+```
+
+* We can see that the most distance flown was 4983 miles and the shortest distance flown was 17 miles. Wondering if there is a way to combine the code in order to see two rows, but maybe need mutate() to create a new column.
+
+# Chapter 3 (Pg. 54)
+
+##  Exercise 2
+```{r}
+# test
+flights %>% select(carrier, origin, origin, dep_time)
+```
+
+* Nothing happens; it will not list the variable name twice though. 
+
+##  Exercise 4
+```{r}
+# test
+select(flights, contains("TIME"))
+```
+
+* This code resulted in selection of all variables with "time" in them. It seems select() and/or contains() is not case sensitive, so regardless of caps or not, it will still select the variables of interest. 
+
+# Chapter 3 (Pg. 58)
+
+##  Exercise 1
+```{r}
+# converting dep_time and sched_dep_time to minutes since midnight
+flights %>%
+  transmute(
+    dep_time_mins = (dep_time %/% 100) * 60 + (dep_time %% 100),
+    sched_dep_time_mins = (sched_dep_time %/% 100) * 60 + (sched_dep_time %% 100)
+  )
+  
+#steps 
+# get hours --> x %/% 100 (integer division)
+# get mins --> x %% 100 (remainder)
+# convert to total mins since midnight --> integer division * 60 + remainder
+```
+
+* I used arithmetic in converting the numerical values associated with HHMM time to hours, minutes, and then used a formula to convert this to total minutes to produce a table with new variables representing total minutes since midnight. We see that these values are fairly close to one another in what is shown.
+
+##  Exercise 2
+```{r}
+flights %>%
+  transmute(
+    og_air_time = air_time,
+    arr_minus_dep = (arr_time - dep_time)
+  )
+```
+
+* Expecting to see identical columns, since air_time should be represented by the difference between arrival times and departure times. We actually see a difference in these numbers, some close and others more drastically different. The issue is most likely due to not removing the missing values/NA values; need to remove them with na.rm statement.
+
+##  Exercise 3
+```{r}
+flights %>%
+  select(dep_time,
+         sched_dep_time,
+         dep_delay
+)
+```
+
+* We can see that dep_delay is the difference between dep_time and sched_dep_time. This makes sense. We can also see on-time, late, and early flights this way.
+
+##  Exercise 4
+```{r}
+flights %>%
+  mutate(rank = min_rank(desc(dep_delay))) %>%
+  filter(rank <= 10) %>%
+  arrange(rank) %>%
+  select(rank, dep_delay)
+
+# using min_rank() to find most delayed
+# filtering rank: assigns rank 1 to most delayed flight (includes ties)
+# sorting with arrange so that the ranks are in order, starting at 1 from the top
+```
+
+* I used min_rank, which will include ties, so if two flights are tied for 1st, both will get 1, and the next will get 3. To avoid this, I could use row_number(), which will achieve exactly 10 rows and no ties. From the tibble, we see that there are no duplicates, but if there were, I would reconsider using row_number() or using an argument that specifies using no ties.
+
+
+
+
+
+
+
+

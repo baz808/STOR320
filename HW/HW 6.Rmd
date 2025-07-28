@@ -1,0 +1,196 @@
+---
+title: "Homework 6"
+author: "Sarah Bazari"
+date: "`r format(Sys.time(), '%B %d, %Y')`"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+# Instructions
+
+**Exercises:**  4 (Pg. 302); 1 (Pgs. 316-317); 1 (Pgs. 328-329); 1, 2 (Pgs. 353-354)
+
+**Submission:** Submit via an electronic document on Sakai. Must be submitted as a HTML file generated in RStudio. All assigned problems are chosen according to the textbook *R for Data Science*. You do not need R code to answer every question. If you answer without using R code, delete the code chunk. If the question requires R code, make sure you display R code. If the question requires a figure, make sure you display a figure. A lot of the questions can be answered in written response, but require R code and/or figures for understanding and explaining.
+
+```{r, include=FALSE}
+library(tidyverse)
+```
+
+# Chapter 16 (Pg. 302)
+
+##  Exercise 4
+
+### a)
+```{r}
+last_vector_value = function(input_vector) {
+  last_idx = length(input_vector) # gets last idx with 'length()'
+  return (input_vector[last_idx]) 
+}
+
+ex1_vector = c(11, 22, 33, 44, 55)
+print(last_vector_value(ex1_vector))
+```
+* I used [ and length() to get the last value in the vector. 
+
+### b)
+```{r}
+even_pos = function(input_vector) {
+  # need to check if numeric values first
+  if (!is.numeric(input_vector)) {
+    stop("Input vector must be a numeric vector")
+  }
+  even_idx = input_vector[input_vector %% 2 == 0]
+  return (even_idx)
+}
+
+ex2_vector = c(11, 22, 33, 44, 55)
+print(even_pos(ex2_vector))
+```
+* I first added a piece in the body that checks if the vector is a numeric vector since later on I used arithmetic to find the even positions in the vector. Then, I set evens to the input vector and the [] finds evens based on '%% 2 == 0'.
+
+### c)
+```{r}
+every_but_last = function(input_vector) {
+  exclude_last = (input_vector[-length(input_vector)])
+  return (exclude_last)
+}
+# use [-length(input_vector)]
+ex3_vector = c(11, 22, 33, 44, 55)
+print(every_but_last(ex3_vector))
+```
+* I used the oppsite of problem a, where I wanted to exclude the last value in the vector.
+
+### d)
+```{r}
+only_evens = function(input_vector) {
+  # excludes missing values, and finds even numbers with modula formula
+  even_nums = input_vector[!is.na(input_vector) & input_vector %% 2 == 0]
+  return (even_nums)
+}
+
+ex4_vector = c(11, 22, 33, 44, 55, NA)
+print(only_evens(ex4_vector))
+```
+
+# Chapter 17 (Pgs. 316-317)
+
+##  Exercise 1
+
+### a)
+```{r}
+map_dbl(mtcars, mean)
+```
+
+### b)
+```{r huh}
+library(nycflights13)
+map_chr(flights, typeof)
+```
+
+### c)
+```{r}
+map_int(iris, ~ length(unique(.)))
+```
+
+### d)
+```{r}
+vec2 <- c(-10, 0, 10, 100)
+map(vec2, ~ rnorm(10, mean = .x))
+```
+
+# Chapter 17 (Pgs. 328-329)
+
+##  Exercise 1
+
+### a)
+```{r}
+mean_of_columns = vector("double", ncol(mtcars))
+
+for (i in seq_along(mtcars)) {
+  mean_of_columns[[i]] = mean(mtcars[[i]])
+}
+
+mean_of_columns
+```
+
+### b)
+```{r}
+library(nycflights13)
+types = character(ncol(flights))
+for (i in 1:ncol(flights)) {
+  types[i] = class(flights[[i]])
+}
+types
+```
+
+### c)
+```{r}
+uniques = numeric(ncol(iris))
+for (i in 1:ncol(iris)) {
+  uniques[i] = length(unique(iris[[i]]))
+}
+uniques
+```
+
+### d)
+```{r}
+set.seed(123)
+vec = c(-10, 0, 10, 100)
+output = list()
+
+for (i in 1:length(vec)) {
+  output[[i]] = rnorm(10, mean = vec[i])
+}
+
+output
+```
+
+# Chapter 18 (Pgs. 353-354)
+
+##  Exercise 1
+```{r}
+sim1a <- tibble(
+  x = rep(1:10, each = 3),
+  y = x * 1.5 + 6 + rt(length(x), df = 2)
+)
+
+# Fit linear model
+model <- lm(y ~ x, data = sim1a)
+
+# Visualize
+ggplot(sim1a, aes(x = x, y = y)) +
+  geom_point() +
+  geom_smooth(method = "lm", se = FALSE, color = "blue") +
+  labs(title = "Linear Model Fit to Simulated Data")
+```
+* Linear regression is sensitive to unusual values like outliers because it treats large residuals as disproportionately bad. So, the model bends to minimize the large errors, which distorts the overall trend.
+
+##  Exercise 2
+```{r}
+# Simulate 
+sim1a <- tibble(
+  x = rep(1:10, each = 3),
+  y = x * 1.5 + 6 + rt(length(x), df = 2)
+)
+
+# Fit a linear model
+model1 <- lm(y ~ x, data = sim1a)
+
+# Predict y values from the model
+make_prediction <- function(mod, data) {
+  predict(mod, newdata = data)
+}
+
+# Compute mean absolute distance
+measure_distance <- function(mod, data) {
+  diff <- data$y - make_prediction(mod, data)
+  mean(abs(diff))  # This is the MAE
+}
+
+
+measure_distance(model1, sim1a)
+```
+* On average, the model's predictions are about 1.79 units off from the actual y value in the simulation. This is a low error, so the model fits reasonably well.

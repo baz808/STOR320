@@ -1,0 +1,167 @@
+---
+title: "Homework 1"
+author: "Sarah Bazari"
+date: "`r format(Sys.time(), '%B %d, %Y')`"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+# Instructions
+
+**Exercises:** 1-5 (Pgs. 6-7); 1-2, 5 (Pg. 12); 1-5 (Pgs. 20-21); Open Response
+
+**Submission:** Submit via an electronic document on Sakai. Must be submitted as a HTML file generated in RStudio. All assigned problems are chosen according to the textbook *R for Data Science*. You do not need R code to answer every question. If you answer without using R code, delete the code chunk. If the question requires R code, make sure you display R code. If the question requires a figure, make sure you display a figure. A lot of the questions can be answered in written response, but require R code and/or figures for understanding and explaining.
+
+```{r, include=FALSE}
+library(tidyverse)
+library(ggplot2)
+```
+
+# Chapter 1 (Pgs. 6-7)
+
+##  Exercise 1
+```{r}
+ggplot(data=mpg)
+```
+
+I see absolutely nothing. There is just a blank space for a graph. Why am I even doing this nonsense?
+
+## Exercise 2
+```{r}
+dim(mpg)
+nrow(mpg)
+ncol(mpg)
+```
+There are 234 rows and 11 columns in the dataset **mpg**.
+
+##  Exercise 3
+```{r, eval=FALSE}
+?mpg
+```
+
+```{r}
+unique(mpg$drv)
+```
+
+
+The variable **drg** is a factor variable that takes the following values:
+
+- "f" = front-wheel drive
+- "r" = rear-wheel drive
+- "4" = 4-wheel drive
+
+##  Excercise 4
+```{r}
+ggplot(data=mpg,aes(x=hwy,y=cyl)) +
+  geom_point() + 
+  xlab("Highway Miles Per Gallon") +
+  ylab("Number of Cylinders")
+```
+
+
+##  Excercise 5
+```{r}
+ggplot(data=mpg,aes(x=class,y=drv)) + 
+  geom_point() + 
+  xlab("Type of Car") +
+  ylab("Type of Drive")
+```
+
+Scatter plots are not meant to visualize the relationship between two categorical/qualitative variables. 
+
+# Chapter 1 (Pg. 12)
+
+##  Exercise 1
+* We see that the color blue was mapped as an aesthetic to the variable we are interested in. This is due to incorrect syntax where we included the aesthetic argument (color) within the aes() argument. In this case, the change in appearance does not tell us about the variable of interest. Instead, we want to specify the color aesthetic to the outside of the aes() argument: geom_point(mapping = aes(x=displ,y=hwy), color="blue").
+
+##  Exercise 2
+```{r eval=FALSE, include=FALSE}
+?mpg
+```
+* Categorical variables from mpg include: manufacturer, model, drv, trans, drv, fl, and class. Continuous variables from mpg include: displ, year,  cty, cyl, and hwy. Running view(mpg) opens a pop-up with the data which allows us to see that these are variables assigned to columns.
+
+##  Exercise 5
+```{r eval=FALSE, include=FALSE}
+?geom_point
+```
+* The stroke aesthetic is used to modify the width of the border of a shape.
+
+# Chapter 1 (Pgs. 20-21)
+
+##  Exercise 1
+* We use a line geom, so we would use geom_line(), or we could also visualize lines by geom_point(), geom_smooth(), and/or with a linetype argument. Though, geom_point/geom_smooth are not inherently meant for line charts, they can be used to visualize lines drawn on data points. For a boxplot: geom_boxplot(), for a histogram: geom_histogram(), for an area chart: geom_area().
+
+##  Exercise 2
+```{r predict}
+ggplot(
+  data = mpg,
+  mapping = aes(x = displ, y = hwy, color = drv)
+) + 
+  geom_point() +
+  geom_smooth(se=FALSE)
+```
+* I predicted that there would be three different colors depicting drive train (accomplished by the color mapping), as well as three separate trend lines (accomplished by combining geom_point() and geom_smooth()). I think for the most part I was able to predict this graph correctly. 
+
+##  Exercise 3
+```{r}
+ggplot(data = mpg) + 
+  geom_smooth(
+    mapping = aes(x = displ, y = hwy, color = drv)
+)
+```
+* Intuitively, show.legend removes the default of including a legend with the respective plot. If it is removed, by default, a legend will be included. The author may have chosen to include this argument to better contrast the three plots they produced. Also, it is irrelevant information since the plots do not compare the group aesthetics.
+
+##  Exercise 4
+* By default, it looks like geom_smooth() casts a thick layer on the regression lines. Perhaps they are lower and upper bounds of the regression line as it changes. Including the argument (se=FALSE) removes this from the resulting plot, which may make the plot easier to read.
+
+##  Exercise 5
+
+I don't know if they will look different. Let me check.
+
+```{r}
+ggplot(data = mpg, mapping = aes(x = displ, y = hwy)) + 
+  geom_point() + 
+  geom_smooth()
+
+ggplot() + 
+  geom_point(data = mpg, mapping = aes(x = displ, y = hwy)) + 
+  geom_smooth(data = mpg, mapping = aes(x = displ, y = hwy))
+```
+
+They do not look different. I am incredibly surprised.
+
+# Open Response
+
+For this exercise, use the **diamonds** dataset in the tidyverse. Use `?diamonds` to get more information about the dataset.
+
+```{r packages n q, include=FALSE}
+#preparing library, getting info on data
+library(tidyverse)
+?diamonds
+```
+
+## Step 1: Select 1 numeric variable and 2 categorical variables. Create a graphic using `geom_boxplot()` and `facet_wrap` to illustrate the empirical distributions of the sample.
+
+```{r}
+ggplot(data = diamonds) +
+  geom_boxplot(mapping = aes(x = color, y = price)) +
+  facet_wrap(~ cut)
+```
+Color by price faceted by cut as a discrete variable. 
+
+## Step 2: Choose 2 numeric variables and 2 categorical variables and creatively illustrate the relationship between all the variables. 
+
+```{r}
+ggplot(data = diamonds) +
+  geom_point(mapping = aes(x = carat, y = price, alpha = 0.01),   show.legend = FALSE, color = "red") +
+  facet_grid(cut ~ clarity) +
+  labs(
+    title = "Diamonds price vs. Carat weight",
+    subtitle = "Facet by Cut and Clarity",
+    x = "Carat", y = "Price (USD)"
+)
+```
+Somewhat readable. How do I make the points more visible? alpha and size aesthetics not seeming to change much. 
